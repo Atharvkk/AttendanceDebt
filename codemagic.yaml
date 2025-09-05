@@ -6,6 +6,9 @@ workflows:
     environment:
       xcode: latest
     scripts:
+      - name: Clean build folder
+        script: |
+          rm -rf build
       - name: Build unsigned ipa
         script: |
           xcodebuild \
@@ -13,7 +16,20 @@ workflows:
             -scheme AttendanceDebt \
             -sdk iphoneos \
             -configuration Release \
-            build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+            build \
+            PRODUCT_BUNDLE_IDENTIFIER="com.Athkull.AttendanceDebt" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$CM_BUILD_DIR/build/Release-iphoneos"
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p $CM_BUILD_DIR/build/ios/ipa
+          xcrun -sdk iphoneos PackageApplication \
+            -v "$CM_BUILD_DIR/build/Release-iphoneos/AttendanceDebt.app" \
+            -o "$CM_BUILD_DIR/build/ios/ipa/AttendanceDebt.ipa"
     artifacts:
-      - build/Release-iphoneos/*.app
-
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
